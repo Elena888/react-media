@@ -1,0 +1,30 @@
+@import '~bootstrap/scss/bootstrap';
+
+body{
+  background: #f8f9fa;
+}
+header{
+  .navbar{
+    background: #117a8b !important;
+    padding: 20px 0;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
+  }
+}
+.articles{
+  padding: 50px 0;
+}
+.card{
+  margin-bottom: 25px;
+  border: none;
+  box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.2);
+  h3{
+    font-size: 18px;
+  }
+  &-body{
+    background: #117a8b;
+    color: #fff;
+  }
+  button{
+    margin: 5px;
+  }
+}
