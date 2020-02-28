@@ -7,6 +7,7 @@ class ArticlesItem extends React.Component{
         this.state = {
             isEditing: false,
             title,
+            errorMessage: ''
         }
     }
 
@@ -21,20 +22,36 @@ class ArticlesItem extends React.Component{
         })
     };
 
-    handleSave = () => {
+    handleSave = (e, id) => {
+        e.preventDefault();
+        const { handleEdit } = this.props;
+        const { title } = this.state;
+        if(title.length === 0) {
+            this.setState({errorMessage: 'Title is empty'})
 
+        }else{
+            console.log('title', title)
+            handleEdit(id, title);
+            this.setState({errorMessage: '', isEditing: false})
+        }
+    };
+
+    handleDelete = (e, article) => {
+        e.preventDefault();
+        const {handleDelete} = this.props;
+        handleDelete(article)
     };
 
     render() {
-        const {title, isEditing} = this.state;
-        const {imageUrl, width} = this.props.data;
+        const {title, isEditing, errorMessage} = this.state;
+        const {data, data: {imageUrl, width, id}} = this.props;
         return (
             <div className={`col-md-${width}`}>
                 <div className="card">
                     <img src={`${imageUrl}&height=300&width=300`} alt={title} className="card-img-top" />
                     <div className="card-body">
                         {isEditing ?
-                            <form className="form-inline">
+                            <form>
                                 <input
                                     className="form-control"
                                     type="text"
@@ -42,10 +59,13 @@ class ArticlesItem extends React.Component{
                                     name="title"
                                     onChange={e => this.handleChange(e)}
                                 />
+                                <div className="card-body__error">
+                                    {errorMessage}
+                                </div>
                                 <button
                                     type="submit"
                                     className="btn btn-light"
-                                    onClick={this.handleSave}
+                                    onClick={e => this.handleSave(e, id)}
                                 >
                                     Save
                                 </button>
@@ -60,7 +80,13 @@ class ArticlesItem extends React.Component{
                                 >
                                     Edit
                                 </button>
-                                <button type="button" className="btn btn-danger">Delete</button>
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={e => this.handleDelete(e, data)}
+                                >
+                                    Delete
+                                </button>
                             </>
                         }
                     </div>
@@ -68,7 +94,6 @@ class ArticlesItem extends React.Component{
             </div>
         )
     }
-
-};
+}
 
 export default ArticlesItem;

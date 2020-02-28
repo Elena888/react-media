@@ -12,6 +12,15 @@ header{
 }
 .articles{
   padding: 50px 0;
+  position: relative;
+  .notifications{
+    position: fixed;
+    top: 20px;
+    right: 10px;
+  }
+  .toast{
+    opacity: 1;
+  }
 }
 .card{
   margin-bottom: 25px;
@@ -23,6 +32,11 @@ header{
   &-body{
     background: #117a8b;
     color: #fff;
+    &__error{
+      color: #f7808b;
+      font-size: 12px;
+      font-style: italic;
+    }
   }
   button{
     margin: 5px;
