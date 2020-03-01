@@ -1,19 +1,25 @@
 import React from 'react'
 import { v4 as uuidv4 } from 'uuid';
 import ArticlesItem from './ArticlesItem'
-import Notifications from './Notifications'
+import NotificationsItem from "./NotificationsItem";
+
+
+const DELETE_ARTICLE_TIMER = 5000;
+
+//deep coping an object
+function cloneObject(data){
+    return JSON.parse(JSON.stringify(data))
+}
 
 class Articles extends React.Component{
-    constructor(props) {
-        super(props)
-
-    }
     state = {
         data: [],
         loading: true,
-        restoreDataArr: []
+        restoreDataArr: [],
     };
-    timerId = null
+
+    timerIds = [];
+
     componentDidMount() {
         const targetUrl = 'https://storage.googleapis.com/aller-structure-task/test_data.json';
         fetch(targetUrl)
@@ -21,22 +27,17 @@ class Articles extends React.Component{
             .then(data => {
                 const dataNew = [...data[0]];
 
-                dataNew.map(item => {
-                    let itemCopy = [...item.columns]
+                dataNew.map((item, rowIndex) => {
+                    const itemCopy = [...item.columns];
                     item.columns = itemCopy.map((article, index) => {
                         article.id = uuidv4();
                         article.columnPos = index;
-                        // article = {
-                        //     [index]: article
-                        // };
-
-                        //console.log('article', article)
+                        article.rowIndex = rowIndex;
                         return article
                     });
                     return item
                 });
 
-                //console.log(dataNew)
                 this.setState({data: dataNew, loading: false});
                 return data;
             })
@@ -46,8 +47,10 @@ class Articles extends React.Component{
             });
     }
 
+
+
     handleEdit = (id, newTitle) => {
-        const editedData = JSON.parse(JSON.stringify(this.state.data));
+        const editedData = cloneObject(this.state.data);
         editedData.forEach(item => {
             item.columns.forEach(article => {
                 if(article.id === id){
@@ -59,84 +62,78 @@ class Articles extends React.Component{
     };
 
     handleDelete = article => {
-        if(article) {
-            let restoreData = {};
-
-            let updatedData = JSON.parse(JSON.stringify(this.state.data));
-            //console.log('updatedData', updatedData)
-            updatedData.forEach((item, indexRow) => {
-                item.columns = item.columns.filter(el => {
-                    if (el.id !== article.id) {
-                        return el
-                    } else {
-                        restoreData = {
-                            indexRow,
-                            indexCol: el.columnPos,
-                            article,
-                        };
-                        return null
-                    }
-                });
+        let restoreData = {};
+        let updatedData = cloneObject(this.state.data);
+        updatedData.forEach((item, index) => {
+            item.columns = item.columns.filter(el => {
+                if (el.id !== article.id) {
+                    return el
+                } else {
+                    restoreData = {
+                        article,
+                        indexRow: index,
+                    };
+                    return null
+                }
             });
-            this.setState({restoreDataArr: [...this.state.restoreDataArr, restoreData]}, () => {
-                this.timerId = setTimeout(() => {
-                    console.log(article)
+        });
 
-                    this.handleRemoveRestore(article)
+        this.setState({data: updatedData,restoreDataArr: [...this.state.restoreDataArr, restoreData]}, () => {
+            this.timerIds[`timer-${article.id}`] = setTimeout(() => {
+                console.log('timer', restoreData)
+                this.handleRemoveRestoredItem(restoreData)
 
+            }, DELETE_ARTICLE_TIMER)
+        });
+    };
 
-                }, 4000)
-            });
+    filterRestoreData = item => {
+        let updatedRestoredData = cloneObject(this.state.restoreDataArr);
+        clearTimeout(this.timerIds[`timer-${item.id}`]);
+        return updatedRestoredData.filter(el => el.article.id !== item.id);
+    };
 
-            this.setState({data: updatedData});
+    handleRemoveRestoredItem = item => {
+        const {article, indexRow} = item;
+       // console.log('item', item)
+        let updatedData = cloneObject(this.state.data);
+
+        if(updatedData[indexRow] !== undefined && updatedData[indexRow].columns.length === 0){
+            updatedData.splice(indexRow, 1);
         }
+        const updatedRestoredData = this.filterRestoreData(article);
+        this.setState({data: updatedData, restoreDataArr: updatedRestoredData});
     };
 
-    handleRemoveRestore = item => {
-        let updatedData = JSON.parse(JSON.stringify(this.state.restoreDataArr));
-        updatedData = updatedData.filter(el => el.article.id !== item.id);
-        this.setState({restoreDataArr: updatedData})
-    };
-
-    handleRestoreItem = item => {
-        const {indexRow, indexCol, article} = item;
-        let updatedData = JSON.parse(JSON.stringify(this.state.data));
+    handleRestoreButton = item => {
+        const {article, indexRow} = item;
+        let updatedData = cloneObject(this.state.data);
         const { columns } = updatedData[indexRow];
 
-        //updatedData[indexRow].columns[indexCol] = article;
-        columns.forEach((item, index) => {
-            if(indexCol === index){
-                console.log('1',index, indexCol)
-                columns.splice(index, 0, article)
-            }
+        columns.push(article);
+        columns.sort((a, b) => {
+            const columnPosA = a.columnPos;
+            const columnPosB = b.columnPos;
 
-            if(indexCol >= columns.length){
-                console.log('3',index, indexCol)
-                columns.push(article)
-            }
+            return columnPosA - columnPosB
         });
-        //console.log(columns)
-        //updatedData[indexRow].columns = columnsArr
-        this.setState({data: updatedData});
-        this.handleRemoveRestore(article)
-        clearTimeout(this.timerId);
-       // this.handleDelete(null)
+
+        const updatedRestoredData = this.filterRestoreData(article)
+        this.setState({data: updatedData, restoreDataArr: updatedRestoredData});
     };
 
     render() {
         const {loading, data, restoreDataArr} = this.state;
-        console.log('data', data)
+        //console.log('this.data', data)
 
         return (
             <section className="articles">
-                <div className="container">
-                    <div className="jumbotron jumbotron-fluid">
-                        <div className="container">
-                            <h1 className="display-4">Articles</h1>
-                            <p className="lead">This is a modified jumbotron that occupies the entire horizontal space of its parent.</p>
-                        </div>
+                <div className="jumbotron jumbotron-fluid">
+                    <div className="container">
+                        <h1 className="display-4">Articles</h1>
                     </div>
-
+                </div>
+                <div className="container">
                     {loading ? (
                         <div className="text-center">
                             <div className="spinner-border" role="status">
@@ -164,11 +161,22 @@ class Articles extends React.Component{
                         })
                     )}
                 </div>
-                <Notifications
-                    data={restoreDataArr}
-                    handleRestoreItem={this.handleRestoreItem}
-                    handleRemoveRestore={this.handleRemoveRestore}
-                />
+                {
+                    restoreDataArr.length > 0 &&
+                    <div className="notifications">
+                        {restoreDataArr.map(item => {
+                            return (
+                                <NotificationsItem
+                                    key={item.article.id}
+                                    item={item}
+                                    handleRemoveRestoredItem={this.handleRemoveRestoredItem}
+                                    handleRestoreButton={this.handleRestoreButton}
+                                    countTimer={DELETE_ARTICLE_TIMER}
+                                />
+                            )
+                        })}
+                    </div>
+                }
             </section>
         )
     }
