@@ -1,7 +1,8 @@
 import React from 'react'
 import { v4 as uuidv4 } from 'uuid';
 import ArticlesItem from './ArticlesItem'
-import NotificationsItem from "./NotificationsItem";
+import NotificationsItem from './NotificationsItem'
+import Loading from './Loading'
 
 
 const DELETE_ARTICLE_TIMER = 5000;
@@ -27,12 +28,11 @@ class Articles extends React.Component{
             .then(data => {
                 const dataNew = [...data[0]];
 
-                dataNew.map((item, rowIndex) => {
+                dataNew.map(item => {
                     const itemCopy = [...item.columns];
                     item.columns = itemCopy.map((article, index) => {
                         article.id = uuidv4();
                         article.columnPos = index;
-                        article.rowIndex = rowIndex;
                         return article
                     });
                     return item
@@ -46,7 +46,6 @@ class Articles extends React.Component{
                 return e;
             });
     }
-
 
 
     handleEdit = (id, newTitle) => {
@@ -78,12 +77,15 @@ class Articles extends React.Component{
             });
         });
 
-        this.setState({data: updatedData,restoreDataArr: [...this.state.restoreDataArr, restoreData]}, () => {
-            this.timerIds[`timer-${article.id}`] = setTimeout(() => {
-                console.log('timer', restoreData)
-                this.handleRemoveRestoredItem(restoreData)
+        this.setState({
+            data: updatedData,
+            restoreDataArr: [...this.state.restoreDataArr, restoreData]},
+            () => {
+                this.timerIds[`timer-${article.id}`] = setTimeout(() => {
 
-            }, DELETE_ARTICLE_TIMER)
+                    this.handleRemoveRestoredItem(restoreData)
+
+                }, DELETE_ARTICLE_TIMER)
         });
     };
 
@@ -95,7 +97,6 @@ class Articles extends React.Component{
 
     handleRemoveRestoredItem = item => {
         const {article, indexRow} = item;
-       // console.log('item', item)
         let updatedData = cloneObject(this.state.data);
 
         if(updatedData[indexRow] !== undefined && updatedData[indexRow].columns.length === 0){
@@ -118,13 +119,12 @@ class Articles extends React.Component{
             return columnPosA - columnPosB
         });
 
-        const updatedRestoredData = this.filterRestoreData(article)
+        const updatedRestoredData = this.filterRestoreData(article);
         this.setState({data: updatedData, restoreDataArr: updatedRestoredData});
     };
 
     render() {
         const {loading, data, restoreDataArr} = this.state;
-        //console.log('this.data', data)
 
         return (
             <section className="articles">
@@ -135,11 +135,7 @@ class Articles extends React.Component{
                 </div>
                 <div className="container">
                     {loading ? (
-                        <div className="text-center">
-                            <div className="spinner-border" role="status">
-                                <span className="sr-only">Loading...</span>
-                            </div>
-                        </div>
+                        <Loading />
                     ) : (
                         data.map((item, index) => {
                             return (

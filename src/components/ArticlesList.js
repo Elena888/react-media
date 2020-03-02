@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import {v4 as uuidv4} from "uuid";
-
+import Loading from './Loading'
 
 const ArticlesList = () => {
     const [data, setData] = useState();
@@ -15,11 +15,11 @@ const ArticlesList = () => {
                 data[0].map(item => {
                     item.columns.map(article => {
                         article.id = uuidv4();
-                        const articleTitle = {
+                        const articleData = {
                             id: article.id,
                             title: article.title
                         };
-                        dataNew.push(articleTitle)
+                        dataNew.push(articleData);
                         return article;
                     });
                     return item
@@ -46,11 +46,7 @@ const ArticlesList = () => {
                 <div className="row">
                     <div className="col-md-12">
                         {loading ? (
-                            <div className="text-center">
-                                <div className="spinner-border" role="status">
-                                    <span className="sr-only">Loading...</span>
-                                </div>
-                            </div>
+                            <Loading />
                         ) : (
                             data.map(item => {
                                 return (

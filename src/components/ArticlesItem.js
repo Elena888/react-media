@@ -30,7 +30,7 @@ class ArticlesItem extends React.Component{
             this.setState({errorMessage: 'Title is empty'})
 
         }else if(title.length > 50){
-            this.setState({errorMessage: 'Title must be less than 50 symbols'})
+            this.setState({errorMessage: 'Title must be less than 50 characters'})
         }else{
             handleEdit(id, title);
             this.setState({errorMessage: '', isEditing: false})
